@@ -19,8 +19,10 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  GoogleMapController? mapController;
   CameraPosition? initialPos;
   Position? userPosition;
+  bool didMove = false;
 
   List<UserModel> userMarker = [
     UserModel(
@@ -58,8 +60,6 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    GoogleMapController mapController;
-
     return SafeArea(
       child: Scaffold(
           body: initialPos == null
@@ -69,7 +69,9 @@ class _MyAppState extends State<MyApp> {
                     GoogleMap(
                       onMapCreated: (controller) {
                         mapController = controller;
+                        setState(() {});
                       },
+
                       indoorViewEnabled: true,
                       initialCameraPosition: initialPos!,
                       mapType: MapType.hybrid,
@@ -95,7 +97,30 @@ class _MyAppState extends State<MyApp> {
                         );
                       }).toSet(),
                     ),
-                    Align(child: IconButton(icon: const Icon(Icons.outbond_rounded), onPressed: () {}))
+                    mapController != null
+                        ? Positioned(
+                            bottom: 100,
+                            right: 20,
+                            child: Container(
+                              height: 30,
+                              width: 30,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.yellow[200],
+                              ),
+                              child: Center(
+                                child: IconButton(
+                                  padding: EdgeInsets.zero,
+                                    icon: const Icon(Icons.outbond_rounded),
+                                    onPressed: () {
+                                      mapController!.animateCamera(CameraUpdate.newCameraPosition(initialPos!));
+                                      setState(() {
+                                        didMove = false;
+                                      });
+                                    }),
+                              ),
+                            ))
+                        : Container(),
                   ],
                 )),
     );
