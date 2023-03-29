@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_map_friends/user_details_screen.dart';
 import 'package:google_map_friends/user_model.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 
 void main() {
   runApp(const MaterialApp(
@@ -17,10 +18,10 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-CameraPosition initialPos =
-    const CameraPosition(target: LatLng(37.43296265331129, -122.08832357078792), zoom: 20, tilt: 35, bearing: 150.5);
-
 class _MyAppState extends State<MyApp> {
+  CameraPosition? initialPos;
+  Position? userPosition;
+
   List<UserModel> userMarker = [
     UserModel(
         name: "Mike",
@@ -29,45 +30,86 @@ class _MyAppState extends State<MyApp> {
         id: "initialMarker",
         markerOpacity: 0.8,
         subTitle: "California Lake",
-      address: "123, abc road, xyz city, pqr state"
-    ),
+        address: "123, abc road, xyz city, pqr state"),
     UserModel(
         name: "John",
         lng: -115.08832357078792,
         lat: 37.43296265331129,
-        id:"user3",
+        id: "user3",
         markerOpacity: 0.5,
         subTitle: "Near Lake",
-        address: "785, south road, john city, pqr state"
-    ),
+        address: "785, south road, john city, pqr state"),
     UserModel(name: "Sam", id: "user2", lat: 35.666, lng: -110.08832357078792),
-    UserModel(name: "Gus", id: "user4", lat: 40.666, lng: -115.08832357078792,subTitle: "In city")
+    UserModel(name: "Gus", id: "user4", lat: 40.666, lng: -115.08832357078792, subTitle: "In city")
   ];
 
   @override
+  void initState() {
+    getUserLocation().then((value) {
+      userPosition = value;
+      initialPos =
+          CameraPosition(target: LatLng(userPosition!.latitude, userPosition!.longitude), zoom: 18, tilt: 20, bearing: 35.5);
+      // userMarker.add(UserModel(id: "userHarsh",lat: userPosition!.latitude,lng: userPosition!.longitude,name: "Harsh",subTitle: "Office"));
+
+      setState(() {});
+    });
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    GoogleMapController mapController;
+
     return SafeArea(
       child: Scaffold(
-        body:
-        GoogleMap(
-          indoorViewEnabled: true,
-          initialCameraPosition: initialPos,
-          mapType: MapType.hybrid,
-          buildingsEnabled: true,
-          compassEnabled: false,
-          zoomControlsEnabled: false,
-          markers: userMarker.map((e) {
-            return Marker(
-                markerId: MarkerId(e.id!),
-                position: LatLng(e.lat!, e.lng!),
-                infoWindow: InfoWindow(title: e.name!, snippet: e.subTitle,onTap: () {
-                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => UserDetails(userData: e),));
-                },),
-                alpha: e.markerOpacity!,
-            );
-          }).toSet(),
-        ),
-      ),
+          body: initialPos == null
+              ? const Center(child: CircularProgressIndicator())
+              : Stack(
+                  children: [
+                    GoogleMap(
+                      onMapCreated: (controller) {
+                        mapController = controller;
+                      },
+                      indoorViewEnabled: true,
+                      initialCameraPosition: initialPos!,
+                      mapType: MapType.hybrid,
+                      buildingsEnabled: true,
+                      compassEnabled: false,
+                      zoomControlsEnabled: false,
+                      myLocationEnabled: true,
+                      myLocationButtonEnabled: false,
+                      markers: userMarker.map((e) {
+                        return Marker(
+                          markerId: MarkerId(e.id!),
+                          position: LatLng(e.lat!, e.lng!),
+                          infoWindow: InfoWindow(
+                            title: e.name!,
+                            snippet: e.subTitle,
+                            onTap: () {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => UserDetails(userData: e),
+                              ));
+                            },
+                          ),
+                          alpha: e.markerOpacity!,
+                        );
+                      }).toSet(),
+                    ),
+                    Align(child: IconButton(icon: const Icon(Icons.outbond_rounded), onPressed: () {}))
+                  ],
+                )),
     );
+  }
+
+  Future<Position> getUserLocation() async {
+    LocationPermission permission;
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+    return await Geolocator.getCurrentPosition();
   }
 }
