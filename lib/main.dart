@@ -106,12 +106,12 @@ class _MyAppState extends State<MyApp> {
                               width: 30,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.yellow[200],
+                                color: Colors.grey[300],
                               ),
                               child: Center(
                                 child: IconButton(
                                   padding: EdgeInsets.zero,
-                                    icon: const Icon(Icons.outbond_rounded),
+                                    icon: const Icon(Icons.gps_fixed_sharp),
                                     onPressed: () {
                                       mapController!.animateCamera(CameraUpdate.newCameraPosition(initialPos!));
                                       setState(() {
