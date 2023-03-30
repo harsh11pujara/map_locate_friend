@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_google_places/flutter_google_places.dart';
+import 'package:google_map_friends/services.dart';
 import 'package:google_map_friends/user_details_screen.dart';
 import 'package:google_map_friends/user_model.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_webservice/src/places.dart';
 
 void main() {
   runApp(const MaterialApp(
@@ -20,6 +23,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   GoogleMapController? mapController;
+  String apiKey = "AIzaSyDdfZW0c9OBwdTilbJJYDddYeOcO6snkcw";
   CameraPosition? initialPos;
   Position? userPosition;
   bool didMove = false;
@@ -71,7 +75,6 @@ class _MyAppState extends State<MyApp> {
                         mapController = controller;
                         setState(() {});
                       },
-
                       indoorViewEnabled: true,
                       initialCameraPosition: initialPos!,
                       mapType: MapType.hybrid,
@@ -99,7 +102,7 @@ class _MyAppState extends State<MyApp> {
                     ),
                     mapController != null
                         ? Positioned(
-                            bottom: 100,
+                            bottom: 50,
                             right: 20,
                             child: Container(
                               height: 30,
@@ -110,7 +113,7 @@ class _MyAppState extends State<MyApp> {
                               ),
                               child: Center(
                                 child: IconButton(
-                                  padding: EdgeInsets.zero,
+                                    padding: EdgeInsets.zero,
                                     icon: const Icon(Icons.gps_fixed_sharp),
                                     onPressed: () {
                                       mapController!.animateCamera(CameraUpdate.newCameraPosition(initialPos!));
@@ -121,6 +124,38 @@ class _MyAppState extends State<MyApp> {
                               ),
                             ))
                         : Container(),
+                    // Container(
+                    //   margin: EdgeInsets.only(top: 20, left: 20),
+                    //   height: 50,
+                    //   decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
+                    //   child: IconButton(
+                    //     padding: EdgeInsets.zero,
+                    //     icon: const Icon(
+                    //       Icons.search_sharp,
+                    //       color: Colors.black,
+                    //     ),
+                    //     onPressed: () async {
+                    //       var place = await PlacesAutocomplete.show(
+                    //         context: context,
+                    //         apiKey: apiKey,
+                    //         mode: Mode.overlay,
+                    //       );
+                    //
+                    //       if (place != null) {
+                    //
+                    //       }
+                    //     },
+                    //   ),
+                    // )
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      width: double.infinity,
+                      height: 60,
+                      color: Colors.white,
+                      child: TextField(decoration: InputDecoration(label: Text("Search Loaction"),suffixIcon: Icon(Icons.search_sharp)),onChanged: (value) {
+                        MapServices().getAutocorrectData(value);
+                      },),
+                    )
                   ],
                 )),
     );
