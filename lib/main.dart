@@ -1,4 +1,6 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:google_map_friends/services.dart';
 import 'package:google_map_friends/user_details_screen.dart';
@@ -6,6 +8,7 @@ import 'package:google_map_friends/user_model.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_webservice/src/places.dart';
+import 'package:http/http.dart';
 
 void main() {
   runApp(const MaterialApp(
@@ -27,6 +30,8 @@ class _MyAppState extends State<MyApp> {
   CameraPosition? initialPos;
   Position? userPosition;
   bool didMove = false;
+  Uint8List bytes = Uint8List.fromList([]);
+  BitmapDescriptor? iconValue;
 
   List<UserModel> userMarker = [
     UserModel(
@@ -59,7 +64,17 @@ class _MyAppState extends State<MyApp> {
 
       setState(() {});
     });
+    getNetworkImageInBytes();
     super.initState();
+  }
+
+  getNetworkImageInBytes() async {
+    iconValue = await BitmapDescriptor.fromAssetImage(ImageConfiguration(size: Size(20, 20)), "asset/Vector.png");
+    var response = await get(
+        Uri.parse("https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Pierre-Person.jpg/1200px-Pierre-Person.jpg"));
+    bytes = response.bodyBytes;
+    // var decodedImg = await decodeImageFromList(bytes);
+    setState(() {});
   }
 
   @override
@@ -83,10 +98,21 @@ class _MyAppState extends State<MyApp> {
                       zoomControlsEnabled: false,
                       myLocationEnabled: true,
                       myLocationButtonEnabled: false,
+                      circles: userMarker.map((e) {
+                        return Circle(
+                            circleId: CircleId(e.id.toString()),
+                            fillColor: Colors.blue[900]!.withOpacity(0.3),
+                            center: LatLng(e.lat!, e.lng!),
+                            visible: true,
+                            radius: 10000,
+                            strokeColor: Colors.transparent);
+                      }).toSet(),
                       markers: userMarker.map((e) {
                         return Marker(
                           markerId: MarkerId(e.id!),
                           position: LatLng(e.lat!, e.lng!),
+                          icon: iconValue != null ? iconValue! : BitmapDescriptor.defaultMarker,
+                          // icon: BitmapDescriptor.fromBytes(bytes,),
                           infoWindow: InfoWindow(
                             title: e.name!,
                             snippet: e.subTitle,
@@ -152,9 +178,12 @@ class _MyAppState extends State<MyApp> {
                       width: double.infinity,
                       height: 60,
                       color: Colors.white,
-                      child: TextField(decoration: InputDecoration(label: Text("Search Loaction"),suffixIcon: Icon(Icons.search_sharp)),onChanged: (value) {
-                        MapServices().getAutocorrectData(value);
-                      },),
+                      child: TextField(
+                        decoration: InputDecoration(label: Text("Search Loaction"), suffixIcon: Icon(Icons.search_sharp)),
+                        onChanged: (value) {
+                          MapServices().getAutocorrectData(value);
+                        },
+                      ),
                     )
                   ],
                 )),
